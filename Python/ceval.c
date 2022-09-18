@@ -1097,7 +1097,7 @@ _PyEval_EvalFrameDefault(PyFrameObject *f, int throwflag)
                при условии, что аргумент LOAD_FAST равен нулю. */
 
             // По аналогии с LOAD_FAST, только с известным аргументом
-            PyObject *value = GETLOCAL(0)
+            PyObject *value = GETLOCAL(0);
             if (value == NULL) {
                 format_exc_check_arg(PyExc_UnboundLocalError,
                                      UNBOUNDLOCAL_ERROR_MSG,
