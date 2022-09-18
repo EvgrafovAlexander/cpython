@@ -298,6 +298,21 @@ PyCode_Optimize(PyObject *code, PyObject* consts, PyObject *names,
         cumlc = 0;
 
         switch (opcode) {
+                /* Выполняем оптимизацию при получение opcode LOAD_FAST,
+                   убедившись, что аргумент LOAD_FAST равен 0
+                   и что следующий opcode - LOAD_CONST.  */
+            case LOAD_FAST:
+                j = get_arg(codestr, i);
+                if (codestr[i+3] != LOAD_CONST || j != 0 || !ISBASICBLOCK(blocks, i, 6)) {
+                    break;
+                }
+                // В случае выполнения условий выполняем оптимизацию
+                codestr[i+3] = LOAD_OTUS;
+                codestr[i] = NOP;
+                codestr[i+1] = NOP;
+                codestr[i+2] = NOP;
+                break;
+
                 /* Skip over LOAD_CONST trueconst
                    POP_JUMP_IF_FALSE xx.  This improves
                    "while 1" performance.  */

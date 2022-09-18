@@ -1092,6 +1092,30 @@ _PyEval_EvalFrameDefault(PyFrameObject *f, int throwflag)
             FAST_DISPATCH();
         }
 
+        TARGET(LOAD_OTUS) {
+            /* Объединяет последовательно идущие LOAD_FAST(0), LOAD_CONST
+               при условии, что аргумент LOAD_FAST равен нулю. */
+
+            // По аналогии с LOAD_FAST, только с известным аргументом
+            PyObject *value = GETLOCAL(0)
+            if (value == NULL) {
+                format_exc_check_arg(PyExc_UnboundLocalError,
+                                     UNBOUNDLOCAL_ERROR_MSG,
+                                     PyTuple_GetItem(co->co_varnames, oparg));
+                goto error;
+            }
+            // Увеличиваем счетчик ссылок и добавляем ссылку на значение в стек
+            Py_INCREF(value);
+            PUSH(value);
+
+            // По аналогии с LOAD_CONST
+            PyObject *value = GETITEM(consts, oparg);
+            Py_INCREF(value);
+            PUSH(value);
+            // Переходим к следующему opcode
+            FAST_DISPATCH();
+        }
+
         PREDICTED(STORE_FAST);
         TARGET(STORE_FAST) {
             PyObject *value = POP();
