@@ -1109,7 +1109,7 @@ _PyEval_EvalFrameDefault(PyFrameObject *f, int throwflag)
             PUSH(value);
 
             // По аналогии с LOAD_CONST
-            PyObject *value = GETITEM(consts, oparg);
+            value = GETITEM(consts, oparg);
             Py_INCREF(value);
             PUSH(value);
             // Переходим к следующему opcode
