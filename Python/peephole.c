@@ -309,7 +309,7 @@ PyCode_Optimize(PyObject *code, PyObject* consts, PyObject *names,
                     break;
                 }
                 /* В случае выполнения условий выполняем оптимизацию */
-                //codestr[op_start] = LOAD_OTUS;
+                codestr[op_start] = LOAD_OTUS;
                 //fill_nops(codestr, op_start + 1, nexti + 1);
                 break;
 
