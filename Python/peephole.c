@@ -310,10 +310,10 @@ PyCode_Optimize(PyObject *code, PyObject* consts, PyObject *names,
                 }
                 /* В случае выполнения условий выполняем оптимизацию */
                 //codestr[op_start] = LOAD_OTUS;
-                codestr[i] = NOP;
-                codestr[i+1] = NOP;
-                codestr[i+2] = NOP;
-                codestr[i+3] = LOAD_OTUS;
+                codestr[nexti] = LOAD_OTUS;
+                //codestr[i+1] = NOP;
+                //codestr[i+2] = NOP;
+                //codestr[i+3] = LOAD_OTUS;
                 //fill_nops(codestr, op_start + 1, nexti + 1);
                 break;
 
