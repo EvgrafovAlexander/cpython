@@ -304,13 +304,13 @@ PyCode_Optimize(PyObject *code, PyObject* consts, PyObject *names,
                    убедившись, что аргумент LOAD_FAST равен 0
                    и что следующий opcode - LOAD_CONST.  */
             case LOAD_FAST:
-                j = get_arg(codestr, i);
-                if (nextop != LOAD_CONST || j != 0 || !ISBASICBLOCK(blocks, op_start, i + 1)) {
-                    break;
-                }
+                //j = get_arg(codestr, i);
+                //if (nextop != LOAD_CONST || j != 0 || !ISBASICBLOCK(blocks, op_start, i + 1)) {
+                //    break;
+                //}
                 /* В случае выполнения условий выполняем оптимизацию */
-                codestr[op_start] = LOAD_OTUS;
-                fill_nops(codestr, op_start + 1, nexti + 1);
+                //codestr[op_start] = LOAD_OTUS;
+                //fill_nops(codestr, op_start + 1, nexti + 1);
                 break;
 
                 /* Skip over LOAD_CONST trueconst
