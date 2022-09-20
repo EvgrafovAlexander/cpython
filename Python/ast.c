@@ -4186,6 +4186,34 @@ ast_for_while_stmt(struct compiling *c, const node *n)
 }
 
 static stmt_ty
+ast_for_until_stmt(struct compiling *c, const node *n)
+{
+    /* until_stmt: 'until' test ':' suite */
+    REQ(n, until_stmt);
+    int end_lineno, end_col_offset;
+
+    if (NCH(n) == 4) {
+        expr_ty expression;
+        asdl_seq *suite_seq;
+
+        expression = ast_for_expr(c, CHILD(n, 1));
+        if (!expression)
+            return NULL;
+        suite_seq = ast_for_suite(c, CHILD(n, 3));
+        if (!suite_seq)
+            return NULL;
+        get_last_end_pos(suite_seq, &end_lineno, &end_col_offset);
+        return Until(expression, suite_seq, NULL, LINENO(n), n->n_col_offset,
+                     end_lineno, end_col_offset, c->c_arena);
+    }
+
+    PyErr_Format(PyExc_SystemError,
+                 "wrong number of tokens for 'until' statement: %d",
+                 NCH(n));
+    return NULL;
+}
+
+static stmt_ty
 ast_for_for_stmt(struct compiling *c, const node *n0, bool is_async)
 {
     const node * const n = is_async ? CHILD(n0, 1) : n0;
@@ -4601,6 +4629,8 @@ ast_for_stmt(struct compiling *c, const node *n)
                 return ast_for_if_stmt(c, ch);
             case while_stmt:
                 return ast_for_while_stmt(c, ch);
+            case until_stmt:
+                return ast_for_until_stmt(c, ch);
             case for_stmt:
                 return ast_for_for_stmt(c, ch, 0);
             case try_stmt:
