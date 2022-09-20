@@ -2798,6 +2798,71 @@ compiler_while(struct compiler *c, stmt_ty s)
 }
 
 static int
+compiler_until(struct compiler *c, stmt_ty s)
+{
+    basicblock *loop, *orelse, *end, *anchor = NULL;
+    int constant = expr_constant(s->v.While.test);
+
+    if (constant == 0) {
+        BEGIN_DO_NOT_EMIT_BYTECODE
+        // Push a dummy block so the VISIT_SEQ knows that we are
+        // inside a while loop so it can correctly evaluate syntax
+        // errors.
+        if (!compiler_push_fblock(c, WHILE_LOOP, NULL, NULL)) {
+            return 0;
+        }
+        VISIT_SEQ(c, stmt, s->v.While.body);
+        // Remove the dummy block now that is not needed.
+        compiler_pop_fblock(c, WHILE_LOOP, NULL);
+        END_DO_NOT_EMIT_BYTECODE
+        if (s->v.While.orelse) {
+            VISIT_SEQ(c, stmt, s->v.While.orelse);
+        }
+        return 1;
+    }
+    loop = compiler_new_block(c);
+    end = compiler_new_block(c);
+    if (constant == -1) {
+        anchor = compiler_new_block(c);
+        if (anchor == NULL)
+            return 0;
+    }
+    if (loop == NULL || end == NULL)
+        return 0;
+    if (s->v.While.orelse) {
+        orelse = compiler_new_block(c);
+        if (orelse == NULL)
+            return 0;
+    }
+    else
+        orelse = NULL;
+
+    compiler_use_next_block(c, loop);
+    if (!compiler_push_fblock(c, WHILE_LOOP, loop, end))
+        return 0;
+    if (constant == -1) {
+        if (!compiler_jump_if(c, s->v.While.test, anchor, 0))
+            return 0;
+    }
+    VISIT_SEQ(c, stmt, s->v.While.body);
+    ADDOP_JABS(c, JUMP_ABSOLUTE, loop);
+
+    /* XXX should the two POP instructions be in a separate block
+       if there is no else clause ?
+    */
+
+    if (constant == -1)
+        compiler_use_next_block(c, anchor);
+    compiler_pop_fblock(c, WHILE_LOOP, loop);
+
+    if (orelse != NULL) /* what if orelse is just pass? */
+        VISIT_SEQ(c, stmt, s->v.While.orelse);
+    compiler_use_next_block(c, end);
+
+    return 1;
+}
+
+static int
 compiler_return(struct compiler *c, stmt_ty s)
 {
     int preserve_tos = ((s->v.Return.value != NULL) &&
@@ -3356,6 +3421,8 @@ compiler_visit_stmt(struct compiler *c, stmt_ty s)
         return compiler_for(c, s);
     case While_kind:
         return compiler_while(c, s);
+    case Until_kind:
+        return compiler_until(c, s);
     case If_kind:
         return compiler_if(c, s);
     case Raise_kind:
@@ -5934,7 +6001,7 @@ makecode(struct compiler *c, struct assembler *a)
         goto error;
     }
     co = PyCode_NewWithPosOnlyArgs(posonlyargcount+posorkeywordargcount,
-                                   posonlyargcount, kwonlyargcount, nlocals_int, 
+                                   posonlyargcount, kwonlyargcount, nlocals_int,
                                    maxdepth, flags, bytecode, consts, names,
                                    varnames, freevars, cellvars, c->c_filename,
                                    c->u->u_name, c->u->u_firstlineno, a->a_lnotab);
